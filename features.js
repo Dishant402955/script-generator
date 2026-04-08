@@ -10,28 +10,19 @@ module.exports = function (buckets) {
       avgV = s.reduce((a, x) => a + x.velocity, 0) / s.length;
     }
 
-    // ✅ dominant element = most frequent element (not random)
-    let dominant = null;
+    // ✅ dominant chain (not element anymore)
+    let dominantChain = null;
+
     if (s.length) {
       const map = {};
 
       s.forEach(x => {
-        const key = JSON.stringify(x.element);
+        const key = JSON.stringify(x.elementChain);
         map[key] = (map[key] || 0) + 1;
       });
 
-      const best = Object.entries(map).sort((a,b)=>b[1]-a[1])[0];
-      dominant = best ? JSON.parse(best[0]) : null;
-    }
-
-    // ✅ biggest mutation (correct)
-    let mutation = null;
-    if (b.mutations.length) {
-      mutation = b.mutations.reduce((a, c) => {
-        const A = a.element.boundingBox;
-        const C = c.element.boundingBox;
-        return (C.w * C.h > A.w * A.h) ? c : a;
-      });
+      const best = Object.entries(map).sort((a, b) => b[1] - a[1])[0];
+      dominantChain = best ? JSON.parse(best[0]) : null;
     }
 
     return {
@@ -42,9 +33,10 @@ module.exports = function (buckets) {
       avgV,
       hasClick: b.events.some(e => e.type === "click"),
       hasKey: b.events.some(e => e.type === "keydown"),
-      mutation,
-      dominant
-      , cursorCenter: {x:avgX, y:avgY}
+      cursorCenter: { x: avgX, y: avgY },
+      dominantChain,
+      samples: b.samples,
+      events: b.events
     };
   });
 };

@@ -1,10 +1,12 @@
 module.exports = function (data) {
-  const size = 200;
+  const size = 100;
+
+  const samples = data.samples || [];
+  const events = data.events || [];
 
   const maxTime = Math.max(
-    ...data.samples.map(s => s.time),
-    ...data.events.map(e => e.time),
-    ...data.mutations.map(m => m.time),
+    ...samples.map(s => s.time || 0),
+    ...events.map(e => e.time || 0),
     0
   );
 
@@ -15,21 +17,20 @@ module.exports = function (data) {
       tStart: t,
       tEnd: t + size,
       samples: [],
-      events: [],
-      mutations: []
+      events: []
     });
   }
 
   function fill(arr, key) {
     arr.forEach(x => {
+      if (x.time == null) return;
       const i = Math.floor(x.time / size);
       if (buckets[i]) buckets[i][key].push(x);
     });
   }
 
-  fill(data.samples, "samples");
-  fill(data.events, "events");
-  fill(data.mutations, "mutations");
+  fill(samples, "samples");
+  fill(events, "events");
 
   return buckets;
 };
