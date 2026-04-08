@@ -10,12 +10,16 @@ const output = require("./output");
 
 const data = JSON.parse(fs.readFileSync("./data/recording.json", "utf-8"));
 
+const viewport = data.viewport || {width:1920, height:1080}
+
 const buckets = bucketize(data);
 const features = extractFeatures(buckets);
 const states = classifyStates(features);
 const segments = createSegments(states);
-const timeline = applyRules(segments);
+const timeline = applyRules(segments, viewport);
 const smoothTimeline = smooth(timeline);
+
+
 
 fs.writeFileSync(
   "./output/script.json",
