@@ -22,6 +22,25 @@ function pickContainer(chain, viewport) {
   return chain[0]?.boundingBox || null;
 }
 
+function expandBox(box, viewport) {
+  if (!box) return box;
+
+  const minWidth = viewport.width * 0.35;
+  const minHeight = viewport.height * 0.25;
+
+  let w = Math.max(box.w, minWidth);
+  let h = Math.max(box.h, minHeight);
+
+  let cx = box.x + box.w / 2;
+  let cy = box.y + box.h / 2;
+
+  return {
+    x: cx - w / 2,
+    y: cy - h / 2,
+    w,
+    h
+  };
+}
 // ---------------- CENTER ----------------
 function getCenter(box, viewport) {
   if (!box) return null;
@@ -32,16 +51,18 @@ function getCenter(box, viewport) {
   };
 }
 
-// ---------------- VIEWPORT-SAFE CLAMP ----------------
-// 🔥 THIS is the main fix for sidebar / edges
 function clampCenterForScale(center, scale) {
   if (!center) return center;
 
   const half = 1 / scale / 2;
 
+  // 🔥 allow overshoot (black edges allowed)
+  const min = -half * 0.3;
+  const max = 1 + half * 0.3;
+
   return {
-    x: Math.max(half, Math.min(1 - half, center.x)),
-    y: Math.max(half, Math.min(1 - half, center.y))
+    x: Math.max(min, Math.min(max, center.x)),
+    y: Math.max(min, Math.min(max, center.y))
   };
 }
 
@@ -133,7 +154,8 @@ module.exports = function (segments, viewport) {
       seg.dominantChain ||
       seg.samples?.[0]?.elementChain;
 
-    const box = pickContainer(chain, viewport);
+    let box = pickContainer(chain, viewport);
+box = expandBox(box, viewport);
 
     const domCenter = getCenter(box, viewport);
     const cursor = seg.cursorCenter || DEFAULT;
