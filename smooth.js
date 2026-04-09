@@ -1,26 +1,46 @@
+function dist(a, b) {
+  return (
+    Math.abs(a.x - b.x) +
+    Math.abs(a.y - b.y)
+  );
+}
+
+function scaleDiff(a, b) {
+  return Math.abs(a.scale - b.scale);
+}
+
 module.exports = function (timeline) {
-  const out = [];
+  if (!timeline.length) return [];
 
-  let prev = null;
+  const result = [];
 
-  timeline.forEach(t => {
-    if (!prev) {
-      prev = t;
-      return;
-    }
+  let anchor = timeline[0]; // 🔥 current stable zoom
 
-    const sameZoom =
-      JSON.stringify(prev.zoom) === JSON.stringify(t.zoom);
+  for (let i = 0; i < timeline.length; i++) {
+    const curr = timeline[i];
 
-    if (sameZoom) {
-      prev.t[1] = t.t[1];
+    const move = dist(anchor.zoom, curr.zoom);
+    const scaleChange = scaleDiff(anchor.zoom, curr.zoom);
+
+    const BIG_MOVE = 0.12;      // position threshold
+    const BIG_SCALE = 0.25;     // scale threshold
+
+    const shouldSwitch =
+      move > BIG_MOVE || scaleChange > BIG_SCALE;
+
+    if (shouldSwitch) {
+      // 🔥 commit previous anchor
+      result.push(anchor);
+
+      // 🔥 switch anchor
+      anchor = { ...curr };
     } else {
-      out.push(prev);
-      prev = t;
+      // 🔥 extend current anchor
+      anchor.t[1] = curr.t[1];
     }
-  });
+  }
 
-  if (prev) out.push(prev);
+  result.push(anchor);
 
-  return out;
+  return result;
 };
